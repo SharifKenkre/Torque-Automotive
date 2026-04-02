@@ -532,12 +532,17 @@
     @media (max-width: 900px) {
       .about-grid, .footer-grid { grid-template-columns: 1fr; }
       .nav-links { display: none; }
-      .hero-title { font-size: clamp(2rem, 12vw, 3.5rem); word-break: break-word; }
+      .hero-title { font-size: clamp(2.5rem, 8vw, 3.5rem); }
       .hero-content { margin-top: 15vh; }
       .logo-primary { font-size: 1.5rem; letter-spacing: 0; }
       .logo-gear { width: 1.35rem; height: 1.35rem; margin-left: 0.15rem; }
       .logo-secondary { font-size: 0.6rem; letter-spacing: 4px; margin-top: 0.15rem; margin-right: -4px; }
       header { padding: 1rem 0; }
+    }
+
+    @media (max-width: 500px) {
+      .hero-title { font-size: clamp(1.5rem, 10vw, 2.5rem); white-space: nowrap; }
+      .hero-content { margin-top: 18vh; }
     }
 
     /* Magnetic logic class */
