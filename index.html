@@ -248,6 +248,65 @@
       flex-wrap: wrap;
     }
 
+    /* Scroll Indicator */
+    .scroll-indicator {
+      position: absolute;
+      bottom: 4rem;
+      right: 3rem;
+      z-index: 20;
+      opacity: 0.6;
+      transition: opacity 0.3s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .scroll-indicator:hover {
+      opacity: 1;
+    }
+    .scroll-indicator .mouse {
+      width: 20px;
+      height: 34px;
+      border: 1.5px solid rgba(255, 255, 255, 0.8);
+      border-radius: 10px;
+      position: relative;
+    }
+    .scroll-indicator .scroll-text {
+      font-size: 0.55rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-top: 0.4rem;
+      color: rgba(255, 255, 255, 0.8);
+      font-weight: 500;
+      font-family: 'Inter', sans-serif;
+    }
+    .scroll-indicator .mouse::before {
+      content: '';
+      position: absolute;
+      top: 4px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 2.5px;
+      height: 6px;
+      background-color: var(--orange);
+      border-radius: 2px;
+      animation: scrollWheel 1.5s infinite;
+    }
+    @keyframes scrollWheel {
+      0% { top: 4px; opacity: 1; }
+      100% { top: 16px; opacity: 0; }
+    }
+
+    @media (max-width: 768px) {
+      .scroll-indicator {
+        bottom: 2rem;
+        right: 1.5rem;
+      }
+      .scroll-indicator .scroll-text {
+        font-size: 0.45rem;
+        letter-spacing: 1px;
+      }
+    }
+
     /* Marquee */
     .marquee-container {
       background: var(--orange);
@@ -389,19 +448,16 @@
       overflow: hidden;
       position: relative;
       display: flex;
+      cursor: grab;
+    }
+    .gallery-marquee:active {
+      cursor: grabbing;
     }
     .gallery-track {
       display: flex;
       gap: 1.5rem;
       padding: 1rem 0.75rem;
       width: max-content;
-      animation: scrollGallery 50s linear infinite;
-    }
-    .gallery-marquee:hover .gallery-track {
-      animation-play-state: paused;
-    }
-    @keyframes scrollGallery {
-      to { transform: translateX(calc(-50% - 0.75rem)); }
     }
     .gallery-img-wrapper {
       flex-shrink: 0;
@@ -423,8 +479,7 @@
     }
     @media (max-width: 768px) {
       .gallery-img-wrapper { width: 280px; height: 200px; }
-      .gallery-track { gap: 1rem; padding: 0 0.5rem; animation-duration: 35s; }
-      @keyframes scrollGallery { to { transform: translateX(calc(-50% - 0.5rem)); } }
+      .gallery-track { gap: 1rem; padding: 0 0.5rem; }
     }
 
     /* Reviews */
@@ -432,15 +487,20 @@
       position: relative;
       overflow: hidden;
     }
+    .reviews-marquee {
+      width: 100%;
+      overflow: hidden;
+      position: relative;
+      cursor: grab;
+    }
+    .reviews-marquee:active {
+      cursor: grabbing;
+    }
     .reviews-track {
       display: flex;
       gap: 2rem;
       padding: 0 1rem 2rem;
       width: max-content;
-      animation: scrollReviews 80s linear infinite;
-    }
-    @keyframes scrollReviews {
-      to { transform: translateX(calc(-50% - 1rem)); }
     }
     .review-card {
       width: 400px;
@@ -469,8 +529,7 @@
     
     @media (max-width: 768px) {
       .review-card { width: 320px; padding: 2rem; }
-      .reviews-track { gap: 1rem; padding: 0 0.5rem 2rem; animation-duration: 60s; }
-      @keyframes scrollReviews { to { transform: translateX(calc(-50% - 0.5rem)); } }
+      .reviews-track { gap: 1rem; padding: 0 0.5rem 2rem; }
     }
 
     /* CTA Section */
@@ -592,6 +651,10 @@
           <a href="#about" class="btn btn-secondary magnetic">Discover Our Story</a>
         </div>
       </div>
+    </div>
+    <div class="scroll-indicator">
+      <div class="mouse"></div>
+      <span class="scroll-text">Scroll</span>
     </div>
   </section>
 
@@ -741,8 +804,9 @@
        </div>
     </div>
        
-    <div class="reviews-track" style="margin-top: 2rem;">
-       <!-- Set 1 -->
+    <div class="reviews-marquee" style="margin-top: 2rem;">
+      <div class="reviews-track">
+         <!-- Set 1 -->
        <div class="review-card">
           <div class="stars">
              <i data-lucide="star" fill="currentColor"></i><i data-lucide="star" fill="currentColor"></i><i data-lucide="star" fill="currentColor"></i><i data-lucide="star" fill="currentColor"></i><i data-lucide="star" fill="currentColor"></i>
@@ -884,6 +948,7 @@
           <p class="review-text">"Honest reviews and recommendations from real people on things worth installing in your car. A nice place to go on your journey that will enhance it. great quality, fast shipping, and helpful staff."</p>
           <p class="reviewer">Naksh Arora</p>
        </div>
+      </div>
     </div>
   </section>
 
@@ -1083,6 +1148,105 @@
         ease: "power1.inOut"
       });
     });
+
+    // Interactive Draggable Marquee function
+    function setupDraggableMarquee(containerSelector, trackSelector, speed) {
+      const container = document.querySelector(containerSelector);
+      const track = document.querySelector(trackSelector);
+      if (!container || !track) return;
+      
+      let isDown = false;
+      let startX;
+      let scrollLeft;
+      let isPaused = false;
+      
+      const loopScroll = () => {
+        if (!isDown && !isPaused) {
+          container.scrollLeft += speed;
+        }
+        
+        // Use scrollWidth / 2 to find exact loop point, assuming content is exactly duplicated.
+        let maxScroll = track.scrollWidth / 2;
+        if (container.scrollLeft >= maxScroll) {
+          container.scrollLeft -= maxScroll;
+        } else if (container.scrollLeft <= 0 && speed < 0) {
+          container.scrollLeft += maxScroll;
+        } else if (container.scrollLeft <= 0 && isDown) {
+          container.scrollLeft += maxScroll;
+        }
+        
+        requestAnimationFrame(loopScroll);
+      };
+      
+      loopScroll();
+
+      // Mouse Events
+      container.addEventListener('mousedown', (e) => {
+        isDown = true;
+        isPaused = true;
+        startX = e.pageX - container.offsetLeft;
+        scrollLeft = container.scrollLeft;
+      });
+      container.addEventListener('mouseleave', () => {
+        isDown = false;
+        isPaused = false;
+      });
+      container.addEventListener('mouseup', () => {
+        isDown = false;
+        isPaused = false;
+      });
+      container.addEventListener('mousemove', (e) => {
+        if (!isDown) return;
+        e.preventDefault();
+        const x = e.pageX - container.offsetLeft;
+        const walk = (x - startX) * 1.5; // Drag speed multiplier
+        container.scrollLeft = scrollLeft - walk;
+        
+        let maxScroll = track.scrollWidth / 2;
+        if (container.scrollLeft >= maxScroll) {
+          container.scrollLeft -= maxScroll;
+          startX = e.pageX - container.offsetLeft;
+          scrollLeft = container.scrollLeft;
+        } else if (container.scrollLeft <= 0) {
+          container.scrollLeft += maxScroll;
+          startX = e.pageX - container.offsetLeft;
+          scrollLeft = container.scrollLeft;
+        }
+      });
+
+      // Touch Events for Mobile
+      container.addEventListener('touchstart', (e) => {
+        isDown = true;
+        isPaused = true;
+        startX = e.touches[0].pageX - container.offsetLeft;
+        scrollLeft = container.scrollLeft;
+      });
+      container.addEventListener('touchend', () => {
+        isDown = false;
+        isPaused = false;
+      });
+      container.addEventListener('touchmove', (e) => {
+        if (!isDown) return;
+        const x = e.touches[0].pageX - container.offsetLeft;
+        const walk = (x - startX) * 1.5;
+        container.scrollLeft = scrollLeft - walk;
+
+        let maxScroll = track.scrollWidth / 2;
+        if (container.scrollLeft >= maxScroll) {
+          container.scrollLeft -= maxScroll;
+          startX = e.touches[0].pageX - container.offsetLeft;
+          scrollLeft = container.scrollLeft;
+        } else if (container.scrollLeft <= 0) {
+          container.scrollLeft += maxScroll;
+          startX = e.touches[0].pageX - container.offsetLeft;
+          scrollLeft = container.scrollLeft;
+        }
+      });
+    }
+
+    // Initialize the draggable scrolling for gallery and reviews
+    setupDraggableMarquee('.gallery-marquee', '.gallery-track', 1);
+    setupDraggableMarquee('.reviews-marquee', '.reviews-track', 0.8);
 
     // Magnetic Button Effect via GSAP
     const magneticElements = document.querySelectorAll('.magnetic');
